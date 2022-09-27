@@ -1,101 +1,103 @@
-var canvas = document.querySelector("canvas");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const canvas = document.querySelector("canvas");
+const c = canvas.getContext("2d");
 
-var c = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
-var mouse = {
-  x: undefined,
-  y: undefined,
+const mouse = {
+  x: innerWidth / 2,
+  y: innerHeight / 2,
 };
 
-var maxRadius = 20;
+const colors = ["#2185C5", "#7ECEFD", "#FFF6E5", "#FF7F66"];
 
-var colorArray = ["#ffaa33", "#99ffaaa", "#00ff00", "#4411aa", "#ff1100"];
-
-window.addEventListener("mousemove", function (event) {
-  mouse.x = event.x;
-  mouse.y = event.y;
+// Event Listeners
+addEventListener("mousemove", (event) => {
+  mouse.x = event.clientX;
+  mouse.y = event.clientY;
 });
 
-window.addEventListener("resize", function () {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+addEventListener("resize", () => {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+
   init();
 });
 
-var circlearray = [];
+const friction = 0.99;
+const gravity = 0.005;
 
-function init() {
-  circlearray = [];
-  for (var i = 0; i < 2000; i++) {
-    var radius = Math.random() * 3 + 3;
-    console.log(radius);
-    var x = Math.random() * (innerWidth - radius * 2) + radius;
-    var y = Math.random() * (innerHeight - radius * 2) + radius;
-    var dx = Math.random() - 0.5;
-    var dy = Math.random() - 0.5;
-
-    var circle = new Circle(x, y, dx, dy, radius);
-    circlearray.push(circle);
+// Objects
+class Particle {
+  constructor(x, y, radius, color, velocity) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.color = color;
+    this.velocity = velocity;
+    this.alpha = 1;
   }
-}
 
-function Circle(x, y, dx, dy, radius) {
-  this.x = x;
-  this.y = y;
-  this.dx = dx;
-  this.dy = dy;
-  this.radius = radius;
-  this.color = colorArray[Math.floor(Math.random() * colorArray.length)];
-  this.minRadius = radius;
+  draw() {
+    c.save();
 
-  this.draw = function () {
+    c.globalAlpha = this.alpha;
     c.beginPath();
     c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
     c.fillStyle = this.color;
     c.fill();
-    c.stroke();
-  };
+    c.closePath();
+  }
 
-  this.update = function () {
-    if (this.x + this.radius >= innerWidth || this.x - this.radius <= 0) {
-      this.dx = -this.dx;
-    }
-    if (this.y + this.radius > innerHeight || this.y - this.radius < 0) {
-      this.dy = -this.dy;
-    }
-    this.x += this.dx;
-    this.y += this.dy;
-
-    if (
-      mouse.x - this.x < 50 &&
-      mouse.x - this.x > -50 &&
-      mouse.y - this.y < 50 &&
-      mouse.y - this.y > -50
-    ) {
-      if (this.radius < maxRadius) {
-        this.radius += 1;
-      }
-    } else if (this.radius > this.minRadius) {
-      this.radius -= 1;
-    }
-
+  update() {
     this.draw();
-  };
-}
-
-init();
-
-console.log(circlearray);
-
-function animate() {
-  requestAnimationFrame(animate);
-  c.clearRect(0, 0, innerWidth, innerHeight);
-
-  for (var i = 0; i < circlearray.length; i++) {
-    circlearray[i].update();
+    this.velocity.x *= friction;
+    this.velocity.y += gravity;
+    this.x += this.velocity.x;
+    this.y += this.velocity.y;
+    this.alpha -= 0.005;
   }
 }
 
+// Implementation
+let particles;
+function init() {
+  particles = [];
+}
+
+// Animation Loop
+function animate() {
+  requestAnimationFrame(animate);
+  c.fillStyle = "rgba(0, 0, 0, 0.05)";
+  c.fillRect(0, 0, canvas.width, canvas.height);
+
+  particles.forEach((particle, i) => {
+    if (particle.alpha > 0) {
+      particle.update();
+    } else {
+      particles.splice[i];
+    }
+  });
+}
+
+init();
 animate();
+
+addEventListener("click", (event) => {
+  mouse.x = event.clientX;
+  mouse.y = event.clientY;
+  console.log('hi')
+
+  const count = 200;
+
+  const angleIncrement = (Math.PI * 2) / count;
+  for (let i = 0; i < count; i++) {
+    let hue = Math.random() * 360;
+    particles.push(
+      new Particle(mouse.x, mouse.y, 3, `hsl(${hue}, 50%, 50%)`, {
+        x: Math.cos(angleIncrement * i) * Math.random()*10,
+        y: Math.sin(angleIncrement * i) * Math.random()*10,
+      })
+    );
+  }
+});
